@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Market Engine</title>
+<style>
+body{background:#0e1117;color:#e6e6e6;font:14px system-ui,sans-serif;margin:24px}
+h1{font-size:18px;margin:0 0 16px}
+.tiles{display:flex;gap:12px;margin-bottom:16px}
+.tile{background:#161b22;padding:12px 16px;border-radius:8px;min-width:130px;color:#8b949e}
+.tile b{display:block;font-size:22px;margin-top:4px;color:#e6e6e6}
+table{border-collapse:collapse;width:100%;background:#161b22;border-radius:8px}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid #222}
+th{color:#8b949e;font-weight:500}
+th:first-child,td:first-child{text-align:left}
+.bar{position:relative;width:120px;height:10px;background:#222;display:inline-block;vertical-align:middle}
+.bar i{position:absolute;top:0;height:10px}
+.up{color:#3fb950}.dn{color:#f85149}
+.flash{background:#3a2a00}
+#alerts{margin-top:16px;background:#161b22;padding:12px;border-radius:8px;font-family:monospace;max-height:240px;overflow:auto}
+</style></head><body>
+<h1>Real-Time Market-Data Engine</h1>
+<div class="tiles">
+  <div class="tile">Ticks/sec<b id="tps">–</b></div>
+  <div class="tile">p50 latency<b id="p50">–</b></div>
+  <div class="tile">p99 latency<b id="p99">–</b></div>
+</div>
+<table><thead><tr>
+  <th>Symbol</th><th>Price</th><th>VWAP (60s)</th><th>vs VWAP</th>
+  <th>Vol (bps/s)</th><th>Order-flow imbalance</th><th>Ticks</th>
+</tr></thead><tbody id="rows"></tbody></table>
+<div id="alerts"><b>Alerts</b><div id="alist"></div></div>
+<script>
+const f = (x, d) => Number(x).toFixed(d);
+async function refresh() {
+  try {
+    const s = await (await fetch('/stats')).json();
+    tps.textContent = f(s.tps, 1);
+    p50.textContent = f(s.p50, 1) + ' ms';
+    p99.textContent = f(s.p99, 1) + ' ms';
+    rows.innerHTML = s.rows.map(r => {
+      const dev = r.VWAP ? (r.Price / r.VWAP - 1) * 1e4 : 0;  // distance from VWAP in bps
+      const imb = r.Imbalance, w = Math.abs(imb) * 60;
+      const bar = `<span class="bar"><i style="left:${imb >= 0 ? 60 : 60 - w}px;width:${w}px;background:${imb >= 0 ? '#3fb950' : '#f85149'}"></i></span> ${imb >= 0 ? '+' : ''}${f(imb, 2)}`;
+      const dp = r.Price < 1 ? 5 : 2;
+      return `<tr${r.Alert ? ' class="flash"' : ''}>
+        <td>${r.Symbol.replace('BINANCE:', '')}</td><td>${f(r.Price, dp)}</td><td>${f(r.VWAP, dp)}</td>
+        <td class="${dev >= 0 ? 'up' : 'dn'}">${f(dev, 1)} bps</td><td>${f(r.VolBps, 2)}</td>
+        <td>${bar}</td><td>${r.N}</td></tr>`;
+    }).join('');
+    alist.innerHTML = (s.alerts || []).map(a => `<div>${a}</div>`).join('') || '<div>none yet</div>';
+  } catch (e) {}
+}
+setInterval(refresh, 1000);
+refresh();
+</script></body></html>
