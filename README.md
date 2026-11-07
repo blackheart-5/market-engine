@@ -133,3 +133,15 @@ The window keeps running sums and updates them as ticks enter and leave, so each
 - **Persistence.** Analytics live in memory. A time-series store such as TimescaleDB or QuestDB would add history behind the dashboard.
 - **Better anomaly models.** The z-score rule could be compared against EWMA volatility or rolling quantiles.
 - **Horizontal scale test.** Run two consumers in one group and measure the partition rebalance.
+
+## Deploying to Fly.io
+
+The `Dockerfile` bundles Redpanda, the producer and the consumer into one container (`deploy/start.sh`), so no external Kafka is needed. Kafka data lives only inside the container and resets on every redeploy.
+
+```bash
+fly launch --no-deploy --copy-config   # pick a unique app name if "market-engine" is taken
+fly secrets set FINNHUB_TOKEN=your_key  # no quotes around the key
+fly deploy
+```
+
+`KAFKA_BROKERS` (default `localhost:19092`) and `PORT` (default `8090`) can be overridden in any environment.

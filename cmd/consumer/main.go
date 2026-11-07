@@ -68,7 +68,7 @@ func pct(sorted []float64, q float64) float64 {
 func main() {
 	topic, group := env("TOPIC", "ticks"), env("GROUP", "analytics")
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:        []string{"localhost:19092"},
+		Brokers:        []string{env("KAFKA_BROKERS", "localhost:19092")},
 		Topic:          topic,
 		GroupID:        group,
 		StartOffset:    kafka.FirstOffset,
@@ -83,8 +83,9 @@ func main() {
 	http.HandleFunc("/stats", dash.serveStats)
 	http.Handle("/", http.FileServer(http.Dir("web")))
 	go func() {
-		log.Println("dashboard on http://localhost:8090")
-		log.Fatal(http.ListenAndServe(":8090", nil))
+		port := env("PORT", "8090")
+		log.Println("dashboard on http://localhost:" + port)
+		log.Fatal(http.ListenAndServe(":"+port, nil))
 	}()
 
 	msgs := make(chan kafka.Message, 10_000)

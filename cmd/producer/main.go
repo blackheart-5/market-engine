@@ -27,6 +27,13 @@ type finnhubMsg struct {
 // NEW: counters shared between goroutines. atomic = safe without locks.
 var received, published, dropped atomic.Uint64
 
+func brokers() string {
+	if v := os.Getenv("KAFKA_BROKERS"); v != "" {
+		return v
+	}
+	return "localhost:19092"
+}
+
 func main() {
 	token := os.Getenv("FINNHUB_TOKEN")
 	if token == "" {
@@ -35,7 +42,7 @@ func main() {
 
 	// Kafka writer
 	w := &kafka.Writer{
-		Addr:         kafka.TCP("localhost:19092"),
+		Addr:         kafka.TCP(brokers()),
 		Topic:        "ticks",
 		Balancer:     &kafka.Hash{},      // hash(key) -> partition, so each symbol stays on one partition
 		BatchTimeout: 5 * time.Millisecond, // send a batch at least every 5ms
