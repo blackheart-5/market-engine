@@ -3,6 +3,8 @@
 A streaming engine in Go that ingests live crypto trades over WebSocket, routes them through Kafka partitioned by symbol, computes microstructure analytics in real time (VWAP, volatility, order-flow imbalance, anomaly alerts), and serves them on a live web dashboard. A record/replay harness benchmarks the pipeline reproducibly and verifies the analytics are deterministic.
 
 ![dashboard](docs/dashboard.png)
+<img width="1385" height="573" alt="image" src="https://github.com/user-attachments/assets/46dc902a-dcae-40cd-af4f-22f271072c85" />
+
 
 ## Architecture
 
